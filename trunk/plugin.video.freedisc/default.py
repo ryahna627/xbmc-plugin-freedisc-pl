@@ -3,13 +3,20 @@ __author__ = "Pillager"
 __url__ = ""
 __scriptid__ = "plugin.video.freedisc"
 __credits__ = "detoyy"
-__version__ = "0.0.1"
+__version__ = "0.0.9"
 
 import urllib,urllib2,re
 import xbmc,xbmcplugin,xbmcgui,sys
 import cookielib
+import xbmcaddon,os
 
 USER_AGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
+
+addon = xbmcaddon.Addon('plugin.video.freedisc')
+home = addon.getAddonInfo('path')
+search_icon = xbmc.translatePath(os.path.join(home, 'icons', 'search.png'))
+
+
 
 
 def _get_keyboard(default="", heading="", hidden=False):
@@ -22,65 +29,33 @@ def _get_keyboard(default="", heading="", hidden=False):
 
 
 def CATEGORIES():
-        INDEX('http://freedisc.pl/files,movies,0','')
-        #INDEX2('http://freedisc.pl/files,movies,0')
+        INDEX2('http://freedisc.pl/start')
 
 
 def INDEX(url,query):
-        addDir('Search','blabla',3,'')
-        cj = cookielib.CookieJar()
+        addDir('Search','blabla',3,search_icon)
 
-        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
-
-        # Add our headers
-        opener.addheaders = [('User-agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')]
-        
-        urllib2.install_opener(opener)
-
-        data = 'ajaxPage=search&type=0&pageno=Movies&actualGenreName='+query  # nic bo nic nie ma do wyslania narazie
-
-        # Build our Request object (dodanie do url ",data" makes it a POST)
-        req = urllib2.Request(url,data)
-      
-        # Make the request and read the response
-        resp = urllib2.urlopen(req)
-        link = resp.read()
-        #print contents
-        #link = getHtml(url)
-        #print link
-        #regex = "' title='(.+?)'><b><u>"+query+"</u></b>"
-        #matchname = re.compile(regex).findall(link)
+        link = getHtml(url+','+query)
                               
         matchurl = re.compile("<a class='link'   href='(.+?)'  title=").findall(link)
-        #print str(matchurl)+'matchurl'
-        matchthumb = re.compile("<img width='77' height='58' src='/(.+?)'></img>").findall(link)
+        matchthumb = re.compile("<img width='77' height='58' src='/(.+?)'></div>").findall(link)
+
         for url,thumb in zip( matchurl, matchthumb):
-                #print url
-                                           
-                x,y,name = url.split(',')    
-                url = 'http://freedisc.pl/' + url
-                #print url
+                x,y,name = url.split(',')
                 uzytkownik,fileid,filename = url.split(',')
                 fileid = fileid.replace('f-','')
+                url='http://freedisc.pl/' + url +'?ref=deman'
                 thumb = 'http://freedisc.pl/'+thumb
-                thumb = 'http://freedisc.pl/photo/'+fileid+'/7/3'
-                #addDownLink(name + ' ' , url,2, thumb,fileid)
-                addDir(name,url,2,thumb)
+                addDownLink(name , url,5, thumb,fileid)
+                #addDir(name,url,2,thumb)
+
 
 def INDEX2(url):
-        #print url+' index2url'  #http://freedisc.pl/rum,f-302357,cfnm-on-sofa.mp4  http://freedisc.pl/marcin,f-649061,donatan-cleo-my-slowianie.mp4?ref=deman
-        ref = url+'?ref=deman'
-        #print 'INDEX2 ref ' +ref
-        getHtml(ref)
-        #print data
-        x,fileid,name = url.split(',')
-        fileid = fileid.replace('f-','')
-        thumb = 'http://freedisc.pl/photo/'+fileid+'/7/3'
-        addDownLink(name,url,5,thumb,fileid)
+        addDir('Search','blabla',3,'')
 
 
 def SEARCHVIDEOS(url):
-        searchUrl = 'http://freedisc.pl/ajaxRequest.php'
+        searchUrl = 'http://freedisc.pl/search,0,Movies'
         vq = _get_keyboard(heading="Enter the query")
         # if blank or the user cancelled the keyboard, return
         if (not vq): return False, 0
@@ -92,13 +67,24 @@ def SEARCHVIDEOS(url):
 
 
 def getHtml(url):
-        req = urllib2.Request(url)
-        req.add_header('User-Agent', USER_AGENT)
-        response = urllib2.urlopen(req)
-        data = response.read()
-        response.close()
-        return data
+        cj = cookielib.CookieJar()
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
 
+        # Add our headers
+        opener.addheaders = [('User-agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')]
+        
+        urllib2.install_opener(opener)
+
+        #data = ''  # nic bo nic nie ma do wyslania narazie
+
+        # Build our Request object (dodanie do url ",data" makes it a POST)
+        req = urllib2.Request(url)
+      
+        # Make the request and read the response
+        resp = urllib2.urlopen(req)
+        data = resp.read()
+        resp.close()
+        return data
 
 
 def getParams():
@@ -121,13 +107,22 @@ def getParams():
 
 
 def addDownLink(name,url,mode,iconimage,fileid):
-        u = 'http://freedisc.pl/streaming/video.mp4?fileID='+fileid
+        #print 'adddownloadlink '+url
+        #print name
+        #print iconimage + ' thumb'
+        #print fileid
+        u = 'http://freedisc.pl/video/'+fileid+'/'+name
+        #print u
+        referer = 'http://freedisc.pl/embed/video/'+fileid+'?ref=deman'
+        getHtml(referer)
+        urlzrefem = u + '|referer='+referer
+        #print urlzrefem
         ok = True
         liz = xbmcgui.ListItem(name, iconImage="DefaultVideo.png",
                                thumbnailImage=iconimage)
         liz.setInfo(type="Video", infoLabels={ "Title": name })
         ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),
-                                         url=u, listitem=liz, isFolder=False)
+                                         url=urlzrefem, listitem=liz, isFolder=False)
         return ok
 
 
@@ -183,3 +178,5 @@ elif mode == 2:
         INDEX2(url)
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+1]))
