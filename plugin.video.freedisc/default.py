@@ -36,16 +36,22 @@ def INDEX(url,query):
         addDir('Search','blabla',3,search_icon)
 
         link = getHtml(url+','+query)
-                              
-        matchurl = re.compile("<a class='link'   href='(.+?)'  title=").findall(link)
-        matchthumb = re.compile("<img width='77' height='58' src='/(.+?)'></div>").findall(link)
+        #print link
+                               
+        matchurl = re.compile("<div class='searchFileInfoName'><a class='link' href=(.+?)title='").findall(link)
+        matchthumb = re.compile("<div class='searchIcon'><img width='77' height='58' src='(.+?)'></div>").findall(link)
+        #print matchthumb
 
         for url,thumb in zip( matchurl, matchthumb):
-                x,y,name = url.split(',')
+                url = url.replace('"','')
+                print url + ' pierdolonylink'
+                x,y,name = url.split(',') #rum,f-302357,cfnm-on-sofa.mp4'
                 uzytkownik,fileid,filename = url.split(',')
                 fileid = fileid.replace('f-','')
-                url='http://freedisc.pl/' + url +'?ref=deman'
-                thumb = 'http://freedisc.pl/'+thumb
+                url='http://freedisc.pl/' + url
+                print url + ' adres filmu'
+                #thumb = 'http://freedisc.pl/'+thumb
+                print thumb + ' adres obrazka'
                 addDownLink(name , url,5, thumb,fileid)
                 #addDir(name,url,2,thumb)
 
@@ -111,18 +117,18 @@ def addDownLink(name,url,mode,iconimage,fileid):
         #print name
         #print iconimage + ' thumb'
         #print fileid
-        u = 'http://freedisc.pl/video/'+fileid+'/'+name
-        #print u
-        referer = 'http://freedisc.pl/embed/video/'+fileid+'?ref=deman'
-        getHtml(referer)
-        urlzrefem = u + '|referer='+referer
+        u = 'http://stream.freedisc.pl/video/' + fileid + '/' + name
+        print u + ' url filmu'
+        #referer = 'http://freedisc.pl/embed/video/'+fileid+'?ref=deman'
+        #getHtml(referer)
+        #urlzrefem = u + '|referer='+referer
         #print urlzrefem
         ok = True
         liz = xbmcgui.ListItem(name, iconImage="DefaultVideo.png",
                                thumbnailImage=iconimage)
         liz.setInfo(type="Video", infoLabels={ "Title": name })
         ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),
-                                         url=urlzrefem, listitem=liz, isFolder=False)
+                                         url=u + '|referer=http://freedisc.pl/static/player/v68/jwplayer.flash.swf', listitem=liz, isFolder=False)
         return ok
 
 
@@ -179,4 +185,4 @@ elif mode == 2:
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
-1]))
+
