@@ -1,0 +1,1 @@
+plugin do XBMC / Kodi wyszukujacy pliki video umieszczone na popularnym serverze freedisc.pl
